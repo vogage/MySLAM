@@ -128,9 +128,15 @@ void LoopClosing::Run()
                     }
                     else
                     {
+                        //g2o is an open - source C++ framework for optimizing graph - 
+                        //    based nonlinear error functions.g2o has been designed to be easily extensible to 
+                        //    a wide range of problems and a new problem typically can be specified 
+                        //    in a few lines of code.The current implementation provides solutions to several variants of SLAM and BA.
+
                         Sophus::SE3d mTmw = mpMergeMatchedKF->GetPose().cast<double>();
                         g2o::Sim3 gSmw2(mTmw.unit_quaternion(), mTmw.translation(), 1.0);
                         Sophus::SE3d mTcw = mpCurrentKF->GetPose().cast<double>();
+
                         g2o::Sim3 gScw1(mTcw.unit_quaternion(), mTcw.translation(), 1.0);
                         g2o::Sim3 gSw2c = mg2oMergeSlw.inverse();
                         g2o::Sim3 gSw1m = mg2oMergeSlw;
@@ -141,6 +147,7 @@ void LoopClosing::Run()
                         if(mpCurrentKF->GetMap()->IsInertial() && mpMergeMatchedKF->GetMap()->IsInertial())
                         {
                             cout << "Merge check transformation with IMU" << endl;
+
                             if(mSold_new.scale()<0.90||mSold_new.scale()>1.1){
                                 mpMergeLastCurrentKF->SetErase();
                                 mpMergeMatchedKF->SetErase();
@@ -851,7 +858,8 @@ bool LoopClosing::DetectCommonRegionsFromBoW(std::vector<KeyFrame*> &vpBowCand, 
                                 nBestMatchesReproj = numProjOptMatches;
                                 nBestNumCoindicendes = nNumKFs;
                                 pBestMatchedKF = pMostBoWMatchesKF;
-                                g2oBestScw = gScw;
+
+                                g2oBestScw = gScw;  //DetectCommonRegionsFromLastKF
                                 vpBestMapPoints = vpMapPoints;
                                 vpBestMatchedMapPoints = vpMatchedMP;
                             }

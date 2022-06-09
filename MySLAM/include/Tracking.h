@@ -58,8 +58,16 @@ class Tracking
 
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-    Tracking(System* pSys, ORBVocabulary* pVoc, FrameDrawer* pFrameDrawer, MapDrawer* pMapDrawer, Atlas* pAtlas,
-             KeyFrameDatabase* pKFDB, const string &strSettingPath, const int sensor, Settings* settings, const string &_nameSeq=std::string());
+    Tracking(System* pSys, 
+        ORBVocabulary* pVoc, 
+        FrameDrawer* pFrameDrawer, // cv::Mat DrawFrame(float imageScale=1.f);
+        MapDrawer* pMapDrawer, //void DrawMapPoints();
+        Atlas* pAtlas,// atlas 地图册；地图集
+             KeyFrameDatabase* pKFDB, 
+        const string &strSettingPath, 
+        const int sensor, 
+        Settings* settings, 
+        const string &_nameSeq=std::string());
 
     ~Tracking();
 
@@ -68,6 +76,7 @@ public:
     bool ParseORBParamFile(cv::FileStorage &fSettings);
     bool ParseIMUParamFile(cv::FileStorage &fSettings);
 
+    // Sophus : This is a c++ implementation of Lie groups commonly used for 2d and 3d geometric problems 
     // Preprocess the input and call Track(). Extract features and performs stereo matching.
     Sophus::SE3f GrabImageStereo(const cv::Mat &imRectLeft,const cv::Mat &imRectRight, const double &timestamp, string filename);
     Sophus::SE3f GrabImageRGBD(const cv::Mat &imRGB,const cv::Mat &imD, const double &timestamp, string filename);

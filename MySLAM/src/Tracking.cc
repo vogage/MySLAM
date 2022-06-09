@@ -52,11 +52,29 @@ Tracking::Tracking(
     const int sensor, 
     Settings* settings, 
     const string &_nameSeq):
-    mState(NO_IMAGES_YET), mSensor(sensor), mTrackedFr(0), mbStep(false),
-    mbOnlyTracking(false), mbMapUpdated(false), mbVO(false), mpORBVocabulary(pVoc), mpKeyFrameDB(pKFDB),
-    mbReadyToInitializate(false), mpSystem(pSys), mpViewer(NULL), bStepByStep(false),
-    mpFrameDrawer(pFrameDrawer), mpMapDrawer(pMapDrawer), mpAtlas(pAtlas), mnLastRelocFrameId(0), time_recently_lost(5.0),
-    mnInitialFrameId(0), mbCreatedMap(false), mnFirstFrameId(0), mpCamera2(nullptr), mpLastKeyFrame(static_cast<KeyFrame*>(NULL))
+    mState(NO_IMAGES_YET), 
+    mSensor(sensor), 
+    mTrackedFr(0), 
+    mbStep(false),
+    mbOnlyTracking(false), 
+    mbMapUpdated(false), 
+    mbVO(false), 
+    mpORBVocabulary(pVoc),
+    mpKeyFrameDB(pKFDB),
+    mbReadyToInitializate(false), 
+    mpSystem(pSys), 
+    mpViewer(NULL), 
+    bStepByStep(false),
+    mpFrameDrawer(pFrameDrawer), 
+    mpMapDrawer(pMapDrawer), 
+    mpAtlas(pAtlas), 
+    mnLastRelocFrameId(0), 
+    time_recently_lost(5.0),
+    mnInitialFrameId(0), 
+    mbCreatedMap(false), 
+    mnFirstFrameId(0), 
+    mpCamera2(nullptr), 
+    mpLastKeyFrame(static_cast<KeyFrame*>(NULL))
 {
     // Load camera parameters from settings file
     if(settings){
@@ -1472,20 +1490,31 @@ Sophus::SE3f Tracking::GrabImageStereo(const cv::Mat &imRectLeft, const cv::Mat 
     if(mImGray.channels()==3)
     {
         //cout << "Image with 3 channels" << endl;
-        if(mbRGB)
+
+        if(mbRGB)  //Color order (true RGB, false BGR, ignored if grayscale)
         {
+            //CV_EXPORTS_W void cvtColor( InputArray src, OutputArray dst, int code, int dstCn = 0 );
             cvtColor(mImGray,mImGray,cv::COLOR_RGB2GRAY);
+
             cvtColor(imGrayRight,imGrayRight,cv::COLOR_RGB2GRAY);
+
         }
         else
         {
             cvtColor(mImGray,mImGray,cv::COLOR_BGR2GRAY);
+
             cvtColor(imGrayRight,imGrayRight,cv::COLOR_BGR2GRAY);
         }
     }
     else if(mImGray.channels()==4)
     {
         //cout << "Image with 4 channels" << endl;
+        
+        //    RGBA stands for red green blue alpha.
+        //    While it is sometimes described as a color space, 
+        //    it is actually a three - channel RGB color model supplemented with a fourth alpha channel.
+        //    Alpha indicates how opaque each pixel is and allows an image to be combined over others using alpha compositing, 
+        //    with transparent areasand anti - aliasing of the edges of opaque regions.
         if(mbRGB)
         {
             cvtColor(mImGray,mImGray,cv::COLOR_RGBA2GRAY);
@@ -1499,9 +1528,72 @@ Sophus::SE3f Tracking::GrabImageStereo(const cv::Mat &imRectLeft, const cv::Mat 
     }
 
     //cout << "Incoming frame creation" << endl;
+    //enum eSensor {
+    //    MONOCULAR = 0,
+    //    STEREO = 1,
+    //    RGBD = 2,
+    //    IMU_MONOCULAR = 3,
+    //    IMU_STEREO = 4,
+    //    IMU_RGBD = 5,
+    //};
+
+     // mSensor : Input sensor
+    //  GeometricCamera* mpCamera, *mpCamera2;
+
+
+    //Frame::Frame(
+    //    const cv::Mat & imLeft, 
+    //    const cv::Mat & imRight, 
+    //    const double& timeStamp, 
+    //    ORBextractor * extractorLeft, 
+    //    ORBextractor * extractorRight, 
+    //    ORBVocabulary * voc, 
+    //    cv::Mat & K, 
+    //    cv::Mat & distCoef, 
+    //    const float& bf, 
+    //    const float& thDepth, 
+    //    GeometricCamera * pCamera, 
+    //    Frame * pPrevF, 
+    //    const IMU::Calib & ImuCalib
+    //)
+    //    :mpcpi(NULL),
+    //    mpORBvocabulary(voc), 
+    //    mpORBextractorLeft(extractorLeft), 
+    //    mpORBextractorRight(extractorRight), 
+    //    mTimeStamp(timeStamp), 
+    //    mK(K.clone()), 
+    //    mK_(Converter::toMatrix3f(K)), 
+    //    mDistCoef(distCoef.clone()), 
+    //    mbf(bf), 
+    //    mThDepth(thDepth),
+    //    mImuCalib(ImuCalib), 
+    //    mpImuPreintegrated(NULL), 
+    //    mpPrevFrame(pPrevF), 
+    //    mpImuPreintegratedFrame(NULL), 
+    //    mpReferenceKF(static_cast<KeyFrame*>(NULL)), 
+    //    mbIsSet(false), 
+    //    mbImuPreintegrated(false),
+    //    mpCamera(pCamera), 
+    //    mpCamera2(nullptr), 
+    //    mbHasPose(false), 
+    //    mbHasVelocity(false)
 
     if (mSensor == System::STEREO && !mpCamera2)
-        mCurrentFrame = Frame(mImGray,imGrayRight,timestamp,mpORBextractorLeft,mpORBextractorRight,mpORBVocabulary,mK,mDistCoef,mbf,mThDepth,mpCamera);
+        mCurrentFrame = 
+        Frame(
+            mImGray,
+            imGrayRight,
+            timestamp,
+            mpORBextractorLeft,
+            mpORBextractorRight,
+            mpORBVocabulary,
+            mK,
+            mDistCoef,
+            mbf,
+            mThDepth,
+            mpCamera
+        );
+
     else if(mSensor == System::STEREO && mpCamera2)
         mCurrentFrame = Frame(mImGray,imGrayRight,timestamp,mpORBextractorLeft,mpORBextractorRight,mpORBVocabulary,mK,mDistCoef,mbf,mThDepth,mpCamera,mpCamera2,mTlr);
     else if(mSensor == System::IMU_STEREO && !mpCamera2)
@@ -1899,6 +1991,8 @@ void Tracking::Track()
 
     int nCurMapChangeIndex = pCurrentMap->GetMapChangeIndex();
     int nMapChangeIndex = pCurrentMap->GetLastMapChange();
+
+
     if(nCurMapChangeIndex>nMapChangeIndex)
     {
         pCurrentMap->SetLastMapChange(nCurMapChangeIndex);
