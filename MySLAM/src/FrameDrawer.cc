@@ -30,8 +30,12 @@ namespace ORB_SLAM3
 FrameDrawer::FrameDrawer(Atlas* pAtlas):both(false),mpAtlas(pAtlas)
 {
     mState=Tracking::SYSTEM_NOT_READY;
-    mIm = cv::Mat(480,640,CV_8UC3, cv::Scalar(0,0,0));
+    mIm = cv::Mat(480,640,CV_8UC3, cv::Scalar(0,0,0));// cv::Mat : basic image container
     mImRight = cv::Mat(480,640,CV_8UC3, cv::Scalar(0,0,0));
+    //so CV_8UC3 is an 8-bit unsigned integer matrix/image with 3 channels. 
+    //    Although it is most common that this means an RGB (or actually BGR) image, 
+    //        it does not mandate it. It simply means that there are three channels,
+    //        and how you use them is up to you and your application.
 }
 
 cv::Mat FrameDrawer::DrawFrame(float imageScale)
@@ -205,7 +209,7 @@ cv::Mat FrameDrawer::DrawRightFrame(float imageScale)
 {
     cv::Mat im;
     vector<cv::KeyPoint> vIniKeys; // Initialization: KeyPoints in reference frame
-    vector<int> vMatches; // Initialization: correspondeces with reference keypoints
+    vector<int> vMatches; // Initialization: correspondences with reference keypoints
     vector<cv::KeyPoint> vCurrentKeys; // KeyPoints in current frame
     vector<bool> vbVO, vbMap; // Tracked MapPoints in current frame
     int state; // Tracking state
@@ -267,6 +271,7 @@ cv::Mat FrameDrawer::DrawRightFrame(float imageScale)
                 }
 
                 cv::line(im,pt1,pt2,cv::Scalar(0,255,0));
+                //Draws a line segment connecting two points
             }
         }
     }
