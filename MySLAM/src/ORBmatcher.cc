@@ -243,6 +243,8 @@ namespace ORB_SLAM3
 
         while(KFit != KFend && Fit != Fend)
         {
+            //Kfit: vFeatVecKF.begin()
+            //Fit: F.mFeatVec.begin()
             if(KFit->first == Fit->first)
             {
                 const vector<unsigned int> vIndicesKF = KFit->second;

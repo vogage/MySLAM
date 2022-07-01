@@ -26,7 +26,7 @@
 
 namespace ORB_SLAM3
 {
-
+    
 class ExtractorNode
 {
 public:
@@ -35,7 +35,26 @@ public:
     void DivideNode(ExtractorNode &n1, ExtractorNode &n2, ExtractorNode &n3, ExtractorNode &n4);
 
     std::vector<cv::KeyPoint> vKeys;
+    //Parameters
+    //    pt	x& y coordinates of the keypoint
+    //    size	keypoint diameter
+    //    angle	keypoint orientation
+    //    response	keypoint detector response on the keypoint(that is, strength of the keypoint)
+    //    octave	pyramid octave in which the keypoint has been detected
+    //    class_id	object id
+
+    //The class instance stores a keypoint, 
+    //    i.e.a point feature found by one of many available keypoint detectors, 
+    //    such as Harris corner detector, FAST, StarDetector, SURF, SIFT etc.
+
+    //    The keypoint is characterized by the 2D position, 
+    //    scale(proportional to the diameter of the neighborhood that needs to be taken into account), 
+    //    orientationand some other parameters.
+    //    The keypoint neighborhood is then analyzed by another algorithm that builds a descriptor(usually represented as a feature vector).
+    //    The keypoints representing the same object in different images can then be matched using KDTree or another method.
+
     cv::Point2i UL, UR, BL, BR;
+    // typedef Point_<int> Point2i;
     std::list<ExtractorNode>::iterator lit;
     bool bNoMore;
 };
@@ -52,7 +71,7 @@ public:
     ~ORBextractor(){}
 
     // Compute the ORB features and descriptors on an image.
-    // ORB are dispersed on the image using an octree.
+    // ORB are dispersed on the image using an octree.  //dispersed : 分散；散布
     // Mask is ignored in the current implementation.
     int operator()( cv::InputArray _image, cv::InputArray _mask,
                     std::vector<cv::KeyPoint>& _keypoints,

@@ -84,6 +84,7 @@ Tracking::Tracking(
         cv::FileStorage fSettings(strSettingPath, cv::FileStorage::READ);
 
         bool b_parse_cam = ParseCamParamFile(fSettings);
+
         if(!b_parse_cam)
         {
             std::cout << "*Error with the camera parameters in the config file*" << std::endl;

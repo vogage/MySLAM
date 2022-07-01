@@ -439,9 +439,12 @@ namespace ORB_SLAM3
         for( int level = 0; level < nlevels-1; level++ )
         {
             mnFeaturesPerLevel[level] = cvRound(nDesiredFeaturesPerScale);
+            //cvRound()  返回跟参数最接近的整数值，即四舍五入
             sumFeatures += mnFeaturesPerLevel[level];
+
             nDesiredFeaturesPerScale *= factor;
         }
+
         mnFeaturesPerLevel[nlevels-1] = std::max(nfeatures - sumFeatures, 0);
 
         const int npoints = 512;
@@ -555,6 +558,13 @@ namespace ORB_SLAM3
     vector<cv::KeyPoint> ORBextractor::DistributeOctTree(const vector<cv::KeyPoint>& vToDistributeKeys, const int &minX,
                                                          const int &maxX, const int &minY, const int &maxY, const int &N, const int &level)
     {
+        // 1 Compute how many initial nodes
+        // 2 Associate points to childs
+
+         // 3 Retain the best point in each node
+
+
+
         // Compute how many initial nodes
         const int nIni = round(static_cast<float>(maxX-minX)/(maxY-minY));
 
@@ -1086,6 +1096,12 @@ namespace ORB_SLAM3
     int ORBextractor::operator()( InputArray _image, InputArray _mask, vector<KeyPoint>& _keypoints,
                                   OutputArray _descriptors, std::vector<int> &vLappingArea)
     {
+        //     ORBextractor
+
+        //    step1: ComputePyramid
+        //    step2: ComputeKeyPointsOctTree 
+        //    step3: computeDescriptors
+
         //cout << "[ORBextractor]: Max Features: " << nfeatures << endl;
         if(_image.empty())
             return -1;

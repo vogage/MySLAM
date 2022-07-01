@@ -44,7 +44,7 @@ namespace ORB_SLAM3 {
         enum CameraType {
             PinHole = 0,
             Rectified = 1,
-            KannalaBrandt = 2
+            KannalaBrandt = 2 //Kannala-Brandt Camera Model 
         };
 
         /*
@@ -68,7 +68,7 @@ namespace ORB_SLAM3 {
         CameraType cameraType() {return cameraType_;}
         GeometricCamera* camera1() {return calibration1_;}
         GeometricCamera* camera2() {return calibration2_;}
-        cv::Mat camera1DistortionCoef() {return cv::Mat(vPinHoleDistorsion1_.size(),1,CV_32F,vPinHoleDistorsion1_.data());}
+        cv::Mat camera1DistortionCoef() {return cv::Mat(vPinHoleDistorsion1_.size(),1,CV_32F,vPinHoleDistorsion1_.data());}  //t
         cv::Mat camera2DistortionCoef() {return cv::Mat(vPinHoleDistorsion2_.size(),1,CV_32F,vPinHoleDistorsion1_.data());}
 
         Sophus::SE3f Tlr() {return Tlr_;}
