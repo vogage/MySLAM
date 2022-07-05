@@ -75,16 +75,21 @@ namespace ORB_SLAM3
 
     static float IC_Angle(const Mat& image, Point2f pt,  const vector<int> & u_max)
     {
+        //IC: Intensity Centroid 
         int m_01 = 0, m_10 = 0;
 
-        const uchar* center = &image.at<uchar> (cvRound(pt.y), cvRound(pt.x));
-
+        const uchar* center = &image.at<uchar> (cvRound(pt.y), cvRound(pt.x));// the intensity of pt image pixel
+        //而unsigned char 整数范围为0到255( 0__0xFF ) 有时候想把整数数值限在255范围内，也用unsigned char
+        
         // Treat the center line differently, v=0
         for (int u = -HALF_PATCH_SIZE; u <= HALF_PATCH_SIZE; ++u)
             m_10 += u * center[u];
 
-        // Go line by line in the circuI853lar patch
-        int step = (int)image.step1();
+        // Go line by line in the circuIlar patch
+        int step = (int)image.step1(); 
+        //return step.p[i] / elemSize1();
+        //(width of a single matrix row in bytes) / (element size in bytes)
+
         for (int v = 1; v <= HALF_PATCH_SIZE; ++v)
         {
             // Proceed over the two lines
@@ -93,7 +98,9 @@ namespace ORB_SLAM3
             for (int u = -d; u <= d; ++u)
             {
                 int val_plus = center[u + v*step], val_minus = center[u - v*step];
+                //val_plus - val_minus：上行元素-下行元素
                 v_sum += (val_plus - val_minus);
+                //val_plus + val_minus：上行元素+下行元素
                 m_10 += u * (val_plus + val_minus);
             }
             m_01 += v * v_sum;
@@ -145,7 +152,9 @@ namespace ORB_SLAM3
 #undef GET_VALUE
     }
 
-
+        //bit_pattern_31_ is a pre - computed set of points P1(x, y) and P2(x, y).
+        //I believe it to be the set of points obtained by the greedy search described in section 4.3 
+        //Learning Good Binary Features of the original orb paper(ORB: an efficient alternative to SIFT or SURF)
     static int bit_pattern_31_[256*4] =
             {
                     8,-3, 9,5/*mean (0), correlation (0)*/,
@@ -411,10 +420,46 @@ namespace ORB_SLAM3
             nfeatures(_nfeatures), scaleFactor(_scaleFactor), nlevels(_nlevels),
             iniThFAST(_iniThFAST), minThFAST(_minThFAST)
     {
-        mvScaleFactor.resize(nlevels);
+
+        ////ORB parameters
+        // settings.h
+        //int nFeatures = settings->nFeatures();
+        //int nLevels = settings->nLevels();
+        //int fIniThFAST = settings->initThFAST();
+        //int fMinThFAST = settings->minThFAST();
+        //float fScaleFactor = settings->scaleFactor();
+        //ORBextractor initialize 
+
+//#--------------------------------------------------------------------------------------------
+//        # ORB Parameters
+//#--------------------------------------------------------------------------------------------
+//
+//            # ORB Extractor : Number of features per image
+//            ORBextractor.nFeatures : 1200
+//
+//            # ORB Extractor : Scale factor between levels in the scale pyramid
+//            ORBextractor.scaleFactor : 1.2
+//
+//            # ORB Extractor : Number of levels in the scale pyramid
+//            ORBextractor.nLevels : 8
+//
+//            # ORB Extractor : Fast threshold
+//            # Image is divided in a grid.At each cell FAST are extracted imposing a minimum response.
+//            # Firstly we impose iniThFAST.If no corners are detected we impose a lower value minThFAST
+//            # You can lower these values if your images have low contrast
+//            ORBextractor.iniThFAST: 20
+//            ORBextractor.minThFAST : 7
+
+
+
+        mvScaleFactor.resize(nlevels);// the levels of pyramids
+
         mvLevelSigma2.resize(nlevels);
+
         mvScaleFactor[0]=1.0f;
+
         mvLevelSigma2[0]=1.0f;
+
         for(int i=1; i<nlevels; i++)
         {
             mvScaleFactor[i]=mvScaleFactor[i-1]*scaleFactor;
@@ -432,10 +477,16 @@ namespace ORB_SLAM3
         mvImagePyramid.resize(nlevels);
 
         mnFeaturesPerLevel.resize(nlevels);
-        float factor = 1.0f / scaleFactor;
+
+        float factor = 1.0f / scaleFactor; //1/(1.2)
+
         float nDesiredFeaturesPerScale = nfeatures*(1 - factor)/(1 - (float)pow((double)factor, (double)nlevels));
+        //                                                         1200*        ( 1/6)/(1-(5/6)^4)
+        // the sum of propotional series equation 
+        // the item of propotional series is factor
 
         int sumFeatures = 0;
+
         for( int level = 0; level < nlevels-1; level++ )
         {
             mnFeaturesPerLevel[level] = cvRound(nDesiredFeaturesPerScale);
@@ -448,20 +499,48 @@ namespace ORB_SLAM3
         mnFeaturesPerLevel[nlevels-1] = std::max(nfeatures - sumFeatures, 0);
 
         const int npoints = 512;
-        const Point* pattern0 = (const Point*)bit_pattern_31_;
-        std::copy(pattern0, pattern0 + npoints, std::back_inserter(pattern));
 
+        //typedef Point2i Point;
+        //计算描述子
+        const Point* pattern0 = (const Point*)bit_pattern_31_;
+
+        std::copy(pattern0, pattern0 + npoints, std::back_inserter(pattern));
+        //(pattern0,pattern+npoints)插入在pattern的后面
+        //copy(begin,end,container)
+        // std::back_inserter (Container& x);
+        // x: Container in which new elements will
+        //    be inserted at the end.
+        // 
         //This is for orientation
         // pre-compute the end of a row in a circular patch
         umax.resize(HALF_PATCH_SIZE + 1);
 
         int v, v0, vmax = cvFloor(HALF_PATCH_SIZE * sqrt(2.f) / 2 + 1);
         int vmin = cvCeil(HALF_PATCH_SIZE * sqrt(2.f) / 2);
-        const double hp2 = HALF_PATCH_SIZE*HALF_PATCH_SIZE;
+
+    // This is for orientation pre-compute the end of a row in a circular patch
+    //  With characteristic points keypoint Pixel coordinate point as the center of patch Calculate key points in the circle keypoint 
+    // The direction of , The diameter is PATCH_SIZE=31, The radius is HALF_PATCH_SIZE=15
+    // cvRound()  That is, rounding returns the integer value closest to the parameter 
+    // cvFloor()  That is, round down and return the maximum integer value not greater than the parameter 
+    // cvCeil()  That is, round up and return the minimum integer value not less than the parameter 
+
+    // 1.  Maximum number of rows vmax Initialize to R*sin45°( Radical sign 2/2)+1, +1 
+    // In order to vmax and vmin Boundary values cross in the process of traversal , 
+    // Because the rounding operation is done to prevent missing .
+    // 2.  Maximum number of rows vmax Simply 0-45° The maximum number of lines in this process ,
+    //  Not the maximum number of rows of this circle .
+    // 3. vmin Round up the minimum number of rows , yes 45-90° The minimum number of lines in the process 
+        int v, v0, vmax = cvFloor(HALF_PATCH_SIZE * sqrt(2.f) / 2 + 1);// 
+        int vmin = cvCeil(HALF_PATCH_SIZE * sqrt(2.f) / 2);
+
+        const double hp2 = HALF_PATCH_SIZE*HALF_PATCH_SIZE;// 15*15  
+
         for (v = 0; v <= vmax; ++v)
-            umax[v] = cvRound(sqrt(hp2 - v * v));
+            umax[v] = cvRound(sqrt(hp2 - v * v)); // compute the pixels in the circle
 
         // Make sure we are symmetric
+        // I think the symmetric may the centry symmetric
         for (v = HALF_PATCH_SIZE, v0 = 0; v >= vmin; --v)
         {
             while (umax[v0] == umax[v0 + 1])

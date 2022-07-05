@@ -54,6 +54,7 @@ public:
     //    The keypoints representing the same object in different images can then be matched using KDTree or another method.
 
     cv::Point2i UL, UR, BL, BR;
+
     // typedef Point_<int> Point2i;
     std::list<ExtractorNode>::iterator lit;
     bool bNoMore;
@@ -65,23 +66,34 @@ public:
     
     enum {HARRIS_SCORE=0, FAST_SCORE=1 };
 
-    ORBextractor(int nfeatures, float scaleFactor, int nlevels,
-                 int iniThFAST, int minThFAST);
+    ORBextractor(
+        int nfeatures,
+        float scaleFactor, 
+        int nlevels,
+        int iniThFAST, 
+        int minThFAST
+    );
 
     ~ORBextractor(){}
 
     // Compute the ORB features and descriptors on an image.
     // ORB are dispersed on the image using an octree.  //dispersed : 分散；散布
     // Mask is ignored in the current implementation.
-    int operator()( cv::InputArray _image, cv::InputArray _mask,
-                    std::vector<cv::KeyPoint>& _keypoints,
-                    cv::OutputArray _descriptors, std::vector<int> &vLappingArea);
+    int operator()( 
+        cv::InputArray _image, 
+        cv::InputArray _mask,
+        std::vector<cv::KeyPoint>& _keypoints,
+        cv::OutputArray _descriptors, 
+        std::vector<int> &vLappingArea
+        );
 
     int inline GetLevels(){
-        return nlevels;}
+        return nlevels;
+    }
 
     float inline GetScaleFactor(){
-        return scaleFactor;}
+        return scaleFactor;
+    }
 
     std::vector<float> inline GetScaleFactors(){
         return mvScaleFactor;
