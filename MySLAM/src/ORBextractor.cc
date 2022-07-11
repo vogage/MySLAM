@@ -121,10 +121,13 @@ namespace ORB_SLAM3
         const uchar* center = &img.at<uchar>(cvRound(kpt.pt.y), cvRound(kpt.pt.x));
         const int step = (int)img.step;
 
+       // \(反斜杠)的意思就是换行
 #define GET_VALUE(idx) \
         center[cvRound(pattern[idx].x*b + pattern[idx].y*a)*step + \
                cvRound(pattern[idx].x*a - pattern[idx].y*b)]
-
+        //get_value计算特征描述子旋转之后的位置，旋转角度为angle
+        //将旋转后的特征与其进行比较
+        //16为一组，计算center；共32×8组对应点的二进制特征：uchar(8)*32
 
         for (int i = 0; i < 32; ++i, pattern += 16)
         {
@@ -155,6 +158,8 @@ namespace ORB_SLAM3
         //bit_pattern_31_ is a pre - computed set of points P1(x, y) and P2(x, y).
         //I believe it to be the set of points obtained by the greedy search described in section 4.3 
         //Learning Good Binary Features of the original orb paper(ORB: an efficient alternative to SIFT or SURF)
+        //在ORB_SLAM中采用了一种固定的选点模板，这个模板是精心设计的，保证了描述子具有较高的辨识度
+        //比较两个点对应像素点的大小，最终形成了一个256维的二进制描述子
     static int bit_pattern_31_[256*4] =
             {
                     8,-3, 9,5/*mean (0), correlation (0)*/,
@@ -414,11 +419,12 @@ namespace ORB_SLAM3
                     7,0, 12,-2/*mean (0.127002), correlation (0.537452)*/,
                     -1,-6, 0,-11/*mean (0.127148), correlation (0.547401)*/
             };
-
+            
+    //refresh 1.the pattern Points 2.the patch boundary (a circle) 3.the num of features calculate by the level
     ORBextractor::ORBextractor(int _nfeatures, float _scaleFactor, int _nlevels,
                                int _iniThFAST, int _minThFAST):
             nfeatures(_nfeatures), scaleFactor(_scaleFactor), nlevels(_nlevels),
-            iniThFAST(_iniThFAST), minThFAST(_minThFAST)
+            iniThFAST(_iniThFAST), minThFAST(_minThFAST) 
     {
 
         ////ORB parameters
@@ -502,7 +508,7 @@ namespace ORB_SLAM3
 
         //typedef Point2i Point;
         //计算描述子
-        const Point* pattern0 = (const Point*)bit_pattern_31_;
+        const Point* pattern0 = (const Point*)bit_pattern_31_;//点位数量：256*2=512
 
         std::copy(pattern0, pattern0 + npoints, std::back_inserter(pattern));
         //(pattern0,pattern+npoints)插入在pattern的后面
@@ -515,7 +521,9 @@ namespace ORB_SLAM3
         // pre-compute the end of a row in a circular patch
         umax.resize(HALF_PATCH_SIZE + 1);
 
+        //after patch rotate some degree
         int v, v0, vmax = cvFloor(HALF_PATCH_SIZE * sqrt(2.f) / 2 + 1);
+
         int vmin = cvCeil(HALF_PATCH_SIZE * sqrt(2.f) / 2);
 
     // This is for orientation pre-compute the end of a row in a circular patch
@@ -531,8 +539,7 @@ namespace ORB_SLAM3
     // 2.  Maximum number of rows vmax Simply 0-45° The maximum number of lines in this process ,
     //  Not the maximum number of rows of this circle .
     // 3. vmin Round up the minimum number of rows , yes 45-90° The minimum number of lines in the process 
-        int v, v0, vmax = cvFloor(HALF_PATCH_SIZE * sqrt(2.f) / 2 + 1);// 
-        int vmin = cvCeil(HALF_PATCH_SIZE * sqrt(2.f) / 2);
+
 
         const double hp2 = HALF_PATCH_SIZE*HALF_PATCH_SIZE;// 15*15  
 
@@ -550,6 +557,7 @@ namespace ORB_SLAM3
         }
     }
 
+
     static void computeOrientation(const Mat& image, vector<KeyPoint>& keypoints, const vector<int>& umax)
     {
         for (vector<KeyPoint>::iterator keypoint = keypoints.begin(),
@@ -565,6 +573,7 @@ namespace ORB_SLAM3
         const int halfY = ceil(static_cast<float>(BR.y-UL.y)/2);
 
         //Define boundaries of childs
+        //lit->UL;lit->UR;lit->BL;lit->BR
         n1.UL = UL;
         n1.UR = cv::Point2i(UL.x+halfX,UL.y);
         n1.BL = cv::Point2i(UL.x,UL.y+halfY);
@@ -729,8 +738,12 @@ namespace ORB_SLAM3
                         if(n1.vKeys.size()>1)
                         {
                             nToExpand++;
-                            vSizeAndPointerToNode.push_back(make_pair(n1.vKeys.size(),&lNodes.front()));
+                            vSizeAndPointerToNode.push_back(make_pair(n1.vKeys.size(),&lNodes.front())); 
+                            //&INodes.front()：当前front元素的地址 
+                            //list.front()：返回一个reference
                             lNodes.front().lit = lNodes.begin();
+                            //std::list<ExtractorNode>::iterator lit;
+
                         }
                     }
                     if(n2.vKeys.size()>0)
@@ -765,6 +778,7 @@ namespace ORB_SLAM3
                     }
 
                     lit=lNodes.erase(lit);
+                    //仅在列表中删除该对象，迭代器还保留，可以进行lit++或者lit--等迭代器的操作
                     continue;
                 }
             }
@@ -846,6 +860,7 @@ namespace ORB_SLAM3
         // Retain the best point in each node
         vector<cv::KeyPoint> vResultKeys;
         vResultKeys.reserve(nfeatures);
+
         for(list<ExtractorNode>::iterator lit=lNodes.begin(); lit!=lNodes.end(); lit++)
         {
             vector<cv::KeyPoint> &vNodeKeys = lit->vKeys;
@@ -875,8 +890,8 @@ namespace ORB_SLAM3
 
         for (int level = 0; level < nlevels; ++level)
         {
-            const int minBorderX = EDGE_THRESHOLD-3;
-            const int minBorderY = minBorderX;
+            const int minBorderX = EDGE_THRESHOLD-3;//19-3=16
+            const int minBorderY = minBorderX;//16
             const int maxBorderX = mvImagePyramid[level].cols-EDGE_THRESHOLD+3;
             const int maxBorderY = mvImagePyramid[level].rows-EDGE_THRESHOLD+3;
 
@@ -912,6 +927,11 @@ namespace ORB_SLAM3
 
                     vector<cv::KeyPoint> vKeysCell;
 
+                    //Feature from accelerated segment test
+
+                    //As a solution to this, Features from accelerated segment test (FAST) is a corner detection method,
+                    //which could be used to extract feature points and 
+                    //later used to track and map objects in many computer vision tasks
                     FAST(mvImagePyramid[level].rowRange(iniY,maxY).colRange(iniX,maxX),
                          vKeysCell,iniThFAST,true);
 
@@ -1225,12 +1245,15 @@ namespace ORB_SLAM3
 
             // preprocess the resized image
             Mat workingMat = mvImagePyramid[level].clone();
+            //GaussianBlur：去噪
             GaussianBlur(workingMat, workingMat, Size(7, 7), 2, 2, BORDER_REFLECT_101);
 
             // Compute the descriptors
             //Mat desc = descriptors.rowRange(offset, offset + nkeypointsLevel);
             Mat desc = cv::Mat(nkeypointsLevel, 32, CV_8U);
             computeDescriptors(workingMat, keypoints, desc, pattern);
+            //pattern : 512 discript poitns;produced when the ORBextractor is established
+            //
 
             offset += nkeypointsLevel;
 
@@ -1264,12 +1287,19 @@ namespace ORB_SLAM3
 
     void ORBextractor::ComputePyramid(cv::Mat image)
     {
+        //different scale image
+        // or the same image but different size area in the image ???
         for (int level = 0; level < nlevels; ++level)
         {
             float scale = mvInvScaleFactor[level];
             Size sz(cvRound((float)image.cols*scale), cvRound((float)image.rows*scale));
+
             Size wholeSize(sz.width + EDGE_THRESHOLD*2, sz.height + EDGE_THRESHOLD*2);
+            //imge size = original image * scale + threshold
+
             Mat temp(wholeSize, image.type()), masktemp;
+
+            // std::vector<cv::Mat> mvImagePyramid;
             mvImagePyramid[level] = temp(Rect(EDGE_THRESHOLD, EDGE_THRESHOLD, sz.width, sz.height));
 
             // Compute the resized image
@@ -1277,6 +1307,7 @@ namespace ORB_SLAM3
             {
                 resize(mvImagePyramid[level-1], mvImagePyramid[level], sz, 0, 0, INTER_LINEAR);
 
+                //Use the OpenCV function copyMakeBorder() to set the borders (extra padding to your image).
                 copyMakeBorder(mvImagePyramid[level], temp, EDGE_THRESHOLD, EDGE_THRESHOLD, EDGE_THRESHOLD, EDGE_THRESHOLD,
                                BORDER_REFLECT_101+BORDER_ISOLATED);
             }
