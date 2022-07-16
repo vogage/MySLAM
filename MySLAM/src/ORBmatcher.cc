@@ -428,6 +428,7 @@ namespace ORB_SLAM3
                     F.GetFeaturesInArea(pMP->mTrackProjX, pMP->mTrackProjY, r * F.mvScaleFactors[nPredictedLevel], nPredictedLevel - 1, nPredictedLevel);
 
                 if (!vIndices.empty()) {
+                    //    // Best descriptor to fast matching
                     const cv::Mat MPdescriptor = pMP->GetDescriptor();
 
                     int bestDist = 256;

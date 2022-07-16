@@ -387,6 +387,9 @@ void Frame::AssignFeaturesToGrid()
     // Fill matrix with points
     const int nCells = FRAME_GRID_COLS*FRAME_GRID_ROWS;
 
+    //    Nleft = mvKeys.size();
+    //    Nright = mvKeysRight.size();
+    //      N: the num of keypoints in two image : Nleft+Nright 
     int nReserve = 0.5f*N/(nCells);
 
     for(unsigned int i=0; i<FRAME_GRID_COLS;i++)
@@ -397,8 +400,7 @@ void Frame::AssignFeaturesToGrid()
             }
         }
 
-
-
+    //distribute the keypoint 
     for(int i=0;i<N;i++)
     {
         const cv::KeyPoint &kp = (Nleft == -1) ? mvKeysUn[i]
@@ -406,12 +408,17 @@ void Frame::AssignFeaturesToGrid()
                                                                  : mvKeysRight[i - Nleft];
 
         int nGridPosX, nGridPosY;
+
+        // function : PosInGrid(kp,nGridPosX,nGridPosY)
+        // posX = round((kp.pt.x - mnMinX) * mfGridElementWidthInv);
+        // posY = round((kp.pt.y - mnMinY) * mfGridElementHeightInv);
         if(PosInGrid(kp,nGridPosX,nGridPosY)){
             if(Nleft == -1 || i < Nleft)
                 mGrid[nGridPosX][nGridPosY].push_back(i);
             else
                 mGridRight[nGridPosX][nGridPosY].push_back(i - Nleft);
         }
+        // mGrid and mGridRight get the index of keypoints in mvKeys and mvKeysRight
     }
 }
 
@@ -713,9 +720,11 @@ vector<size_t> Frame::GetFeaturesInArea(const float &x, const float  &y, const f
     {
         for(int iy = nMinCellY; iy<=nMaxCellY; iy++)
         {
+            
             //                                              right image?
             const vector<size_t> vCell = (!bRight) ? mGrid[ix][iy] : mGridRight[ix][iy];
-            
+            //                                                              mGrid: the index of keypoints in the grid cell
+
             if(vCell.empty())
                 continue;
 
@@ -744,13 +753,15 @@ vector<size_t> Frame::GetFeaturesInArea(const float &x, const float  &y, const f
                 const float distx = kpUn.pt.x-x;
                 const float disty = kpUn.pt.y-y;
 
+                //fabs() just the same as abs()
                 if(fabs(distx)<factorX && fabs(disty)<factorY)
                     vIndices.push_back(vCell[j]);
             }
         }
     }
 
-    return vIndices;
+    return vIndices;//the index of keypoints in the (x,y) center ,radius = r area;
+    //the feature point can also be celled keypoints here
 }
 
 bool Frame::PosInGrid(const cv::KeyPoint &kp, int &posX, int &posY)
@@ -775,6 +786,9 @@ void Frame::ComputeBoW()
     }
 }
 
+// Undistort keypoints given OpenCV distortion parameters.
+// Only for the RGB-D case. Stereo must be already rectified!
+// (called in the constructor).
 void Frame::UndistortKeyPoints()
 {
     if(mDistCoef.at<float>(0)==0.0)
