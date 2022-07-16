@@ -654,50 +654,81 @@ Eigen::Vector3f Frame::inRefCoordinates(Eigen::Vector3f pCw)
     return mRcw * pCw + mtcw;
 }
 
+//找到以（x,y）为中心，边长为2r的正方形内搜索特征点，加速KeyPoint的匹配
 vector<size_t> Frame::GetFeaturesInArea(const float &x, const float  &y, const float  &r, const int minLevel, const int maxLevel, const bool bRight) const
 {
     vector<size_t> vIndices;
-    vIndices.reserve(N);
+    vIndices.reserve(N);//提前分配内存，避免后期插入时频繁增加内存，提升效率
 
     float factorX = r;
     float factorY = r;
 
+    //// Grid (to speed up feature matching)
+    //const int mnGridCols;
+    //const int mnGridRows;
+    //const float mfGridElementWidthInv;
+    //const float mfGridElementHeightInv;
+
+    //// Image bounds and calibration
+    //const int mnMinX;
+    //const int mnMinY;
+    //const int mnMaxX;
+    //const int mnMaxY;
+
+   //                                                            <left bound (x,y) patch>
     const int nMinCellX = max(0,(int)floor((x-mnMinX-factorX)*mfGridElementWidthInv));
+
     if(nMinCellX>=FRAME_GRID_COLS)
     {
         return vIndices;
     }
 
+    //                                                                                                <right bound (x,y) patch>
     const int nMaxCellX = min((int)FRAME_GRID_COLS-1,(int)ceil((x-mnMinX+factorX)*mfGridElementWidthInv));
+
     if(nMaxCellX<0)
     {
         return vIndices;
     }
 
+    //                                                           <bottom bound (x,y) patch>
     const int nMinCellY = max(0,(int)floor((y-mnMinY-factorY)*mfGridElementHeightInv));
     if(nMinCellY>=FRAME_GRID_ROWS)
     {
         return vIndices;
     }
 
+    //                                                                                                  <up bound (x,y) patch>
     const int nMaxCellY = min((int)FRAME_GRID_ROWS-1,(int)ceil((y-mnMinY+factorY)*mfGridElementHeightInv));
     if(nMaxCellY<0)
     {
         return vIndices;
     }
 
+    //grid cell index: nMinCellX,nMaxCellX,nMinCellY,nMaxCellY
+    //(x,y) center, radius =r ,the square area
     const bool bCheckLevels = (minLevel>0) || (maxLevel>=0);
 
     for(int ix = nMinCellX; ix<=nMaxCellX; ix++)
     {
         for(int iy = nMinCellY; iy<=nMaxCellY; iy++)
         {
+            //                                              right image?
             const vector<size_t> vCell = (!bRight) ? mGrid[ix][iy] : mGridRight[ix][iy];
+            
             if(vCell.empty())
                 continue;
 
+            //      //Vector of keypoints (original for visualization) and undistorted (actually used by the system).
+            //      // In the stereo case, mvKeysUn is redundant as images must be rectified.
+            //      // In the RGB-D case, RGB images can be distorted.
+            //              std::vector<cv::KeyPoint> mvKeys, mvKeysRight;
+            //              std::vector<cv::KeyPoint> mvKeysUn;
+
             for(size_t j=0, jend=vCell.size(); j<jend; j++)
             {
+                //      //Number of KeyPoints extracted in the left and right images
+                //          int Nleft, Nright;
                 const cv::KeyPoint &kpUn = (Nleft == -1) ? mvKeysUn[vCell[j]]
                                                          : (!bRight) ? mvKeys[vCell[j]]
                                                                      : mvKeysRight[vCell[j]];
