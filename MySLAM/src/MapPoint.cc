@@ -71,7 +71,7 @@ MapPoint::MapPoint(const double invDepth, cv::Point2f uv_init, KeyFrame* pRefKF,
 
     // Worldpos is not set
     // MapPoints can be created from Tracking and Local Mapping. This mutex avoid conflicts with id.
-    unique_lock<mutex> lock(mpMap->mMutexPointCreation);
+    unique_lock<mutex> lock(mpMap->6);
     mnId=nNextId++;
 }
 
@@ -332,7 +332,6 @@ void MapPoint::ComputeDistinctiveDescriptors()
     vector<cv::Mat> vDescriptors;
 
     map<KeyFrame*,tuple<int,int>> observations;
-
     {
         unique_lock<mutex> lock1(mMutexFeatures);
         if(mbBad)
@@ -349,16 +348,23 @@ void MapPoint::ComputeDistinctiveDescriptors()
     {
         KeyFrame* pKF = mit->first;
 
+        //from the code I feel that every keyframe according to a keypoint and the keypoint feature
+        //keyframe can observe the keypoint ,so one keyframe accoording one keypoint
         if(!pKF->isBad()){
             tuple<int,int> indexes = mit -> second;
             int leftIndex = get<0>(indexes), rightIndex = get<1>(indexes);
+            //the way to use turple : get<index>(tuple_name)
+            //what is leftIndex and what is rightIndex
 
             if(leftIndex != -1){
                 vDescriptors.push_back(pKF->mDescriptors.row(leftIndex));
+                //mDescriptors: Frame::mDescriptors : ORB descriptor, each row associated to a keypoint.
+                //vDescriptors save the keyframe watched keypoint's descriptor
             }
             if(rightIndex != -1){
                 vDescriptors.push_back(pKF->mDescriptors.row(rightIndex));
             }
+            //vDescriptors include all the keypoint features from rightIndex and leftIndex
         }
     }
 
@@ -369,12 +375,15 @@ void MapPoint::ComputeDistinctiveDescriptors()
     const size_t N = vDescriptors.size();
 
     float Distances[N][N];
+    // i:left image? j:right image?
+    // the distance of one keypoint feature with all another keypoint feature 
     for(size_t i=0;i<N;i++)
     {
         Distances[i][i]=0;
         for(size_t j=i+1;j<N;j++)
         {
             int distij = ORBmatcher::DescriptorDistance(vDescriptors[i],vDescriptors[j]);
+            //Ham distance: the difference num of binary
             Distances[i][j]=distij;
             Distances[j][i]=distij;
         }
@@ -385,10 +394,16 @@ void MapPoint::ComputeDistinctiveDescriptors()
     int BestIdx = 0;
     for(size_t i=0;i<N;i++)
     {
+        //Distances[N][N];
         vector<int> vDists(Distances[i],Distances[i]+N);
+        //Distances[i][0]~Distances[i][N]
+        //one keypiont feature median distance with all other keypoint features
         sort(vDists.begin(),vDists.end());
         int median = vDists[0.5*(N-1)];
-
+        // this mean that almost half of the keypoint features matched well with this keypoint 
+        // then the best match keypoint feature as the Best mDescriptor
+        // this means that the keypoint observed in each keyframe produce the descriptor and if the half of the descriptor matched well 
+        // with the choose descriptor in one keyframe ,then we use the descripor as the keypoint descriptor in every keyframe of the keypoint 
         if(median<BestMedian)
         {
             BestMedian = median;

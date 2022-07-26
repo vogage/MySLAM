@@ -136,7 +136,9 @@ public:
 
     void IncreaseVisible(int n=1);
     void IncreaseFound(int n=1);
+
     float GetFoundRatio();
+
     inline int GetFound(){
         return mnFound;
     }
@@ -149,6 +151,7 @@ public:
 
     float GetMinDistanceInvariance();
     float GetMaxDistanceInvariance();
+     
     int PredictScale(const float &currentDist, KeyFrame*pKF);
     int PredictScale(const float &currentDist, Frame* pF);
 
@@ -214,6 +217,7 @@ protected:
 
      // Keyframes observing the point and associated index in keyframe
      std::map<KeyFrame*,std::tuple<int,int> > mObservations;
+
      // For save relation without pointer, this is necessary for save/load function
      std::map<long unsigned int, int> mBackupObservationsId1;
      std::map<long unsigned int, int> mBackupObservationsId2;
@@ -234,6 +238,7 @@ protected:
 
      // Bad flag (we do not currently erase MapPoint from memory)
      bool mbBad;
+
      MapPoint* mpReplaced;
      // For save relation without pointer, this is necessary for save/load function
      long long int mBackupReplacedId;

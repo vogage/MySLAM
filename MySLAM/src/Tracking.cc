@@ -3414,8 +3414,10 @@ void Tracking::CreateNewKeyFrame()
                         pKF->AddMapPoint(pNewMP,mCurrentFrame.Nleft + mCurrentFrame.mvLeftToRightMatch[i]);
                     }
 
-                    pKF->AddMapPoint(pNewMP,i);
+                    pKF->AddMapPoint(pNewMP,i);//mvpMapPoints
+                    
                     pNewMP->ComputeDistinctiveDescriptors();
+
                     pNewMP->UpdateNormalAndDepth();
                     mpAtlas->AddMapPoint(pNewMP);
 
