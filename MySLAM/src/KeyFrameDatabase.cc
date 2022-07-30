@@ -40,8 +40,11 @@ void KeyFrameDatabase::add(KeyFrame *pKF)
 {
     unique_lock<mutex> lock(mMutex);
 
+    // DBoW2::BowVector mBowVec; //public std::map<WordId, WordValue>
     for(DBoW2::BowVector::const_iterator vit= pKF->mBowVec.begin(), vend=pKF->mBowVec.end(); vit!=vend; vit++)
-        mvInvertedFile[vit->first].push_back(pKF);
+        mvInvertedFile[vit->first].push_back(pKF);//std::vector<list<KeyFrame*> > mvInvertedFile;
+    // every worldId---->list of keyFrame
+
 }
 
 void KeyFrameDatabase::erase(KeyFrame* pKF)

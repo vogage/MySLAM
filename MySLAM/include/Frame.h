@@ -230,13 +230,14 @@ public:
 
     // Corresponding stereo coordinate and depth for each keypoint.
     std::vector<MapPoint*> mvpMapPoints;
+
     // "Monocular" keypoints have a negative value.
     std::vector<float> mvuRight;
     std::vector<float> mvDepth;
 
     // Bag of Words Vector structures.
-    DBoW2::BowVector mBowVec;
-    DBoW2::FeatureVector mFeatVec;
+    DBoW2::BowVector mBowVec;//public std::map<WordId, WordValue>
+    DBoW2::FeatureVector mFeatVec;//public std::map<NodeId, std::vector<unsigned int> >
 
     // ORB descriptor, each row associated to a keypoint.
     cv::Mat mDescriptors, mDescriptorsRight;
@@ -249,7 +250,8 @@ public:
     // Keypoints are assigned to cells in a grid to reduce matching complexity when projecting MapPoints.
     static float mfGridElementWidthInv;
     static float mfGridElementHeightInv;
-    //the nums of keypoints in the grid cell
+
+    //the index of keypoints in the grid cell
     std::vector<std::size_t> mGrid[FRAME_GRID_COLS][FRAME_GRID_ROWS];
 
     IMU::Bias mPredBias;
@@ -292,6 +294,7 @@ public:
 
     static bool mbInitialComputations;
 
+    //matched image and projected point both use cv::point
     map<long unsigned int, cv::Point2f> mmProjectPoints;
     map<long unsigned int, cv::Point2f> mmMatchedInImage;
 

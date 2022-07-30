@@ -223,18 +223,22 @@ public:
 
     void UpdateConnections(bool upParent=true);
     void UpdateBestCovisibles();
+
     std::set<KeyFrame *> GetConnectedKeyFrames();
     std::vector<KeyFrame* > GetVectorCovisibleKeyFrames();
     std::vector<KeyFrame*> GetBestCovisibilityKeyFrames(const int &N);
     std::vector<KeyFrame*> GetCovisiblesByWeight(const int &w);
+
     int GetWeight(KeyFrame* pKF);
 
     // Spanning tree functions
     void AddChild(KeyFrame* pKF);
     void EraseChild(KeyFrame* pKF);
     void ChangeParent(KeyFrame* pKF);
+
     std::set<KeyFrame*> GetChilds();
     KeyFrame* GetParent();
+
     bool hasChild(KeyFrame* pKF);
     void SetFirstConnection(bool bFirst);
 
@@ -252,6 +256,7 @@ public:
     void EraseMapPointMatch(const int &idx);
     void EraseMapPointMatch(MapPoint* pMP);
     void ReplaceMapPointMatch(const int &idx, MapPoint* pMP);
+
     std::set<MapPoint*> GetMapPoints();
     std::vector<MapPoint*> GetMapPointMatches();
     int TrackedMapPoints(const int &minObs);
@@ -467,9 +472,11 @@ protected:
     // Spanning Tree and Loop Edges
     bool mbFirstConnection;
     KeyFrame* mpParent;
+
     std::set<KeyFrame*> mspChildrens;
     std::set<KeyFrame*> mspLoopEdges;
     std::set<KeyFrame*> mspMergeEdges;
+
     // For save relation without pointer, this is necessary for save/load function
     long long int mBackupParentId;
     std::vector<long unsigned int> mvBackupChildrensId;

@@ -734,6 +734,7 @@ vector<size_t> Frame::GetFeaturesInArea(const float &x, const float  &y, const f
             //              std::vector<cv::KeyPoint> mvKeys, mvKeysRight;
             //              std::vector<cv::KeyPoint> mvKeysUn;
 
+
             for(size_t j=0, jend=vCell.size(); j<jend; j++)
             {
                 //      //Number of KeyPoints extracted in the left and right images
@@ -741,6 +742,12 @@ vector<size_t> Frame::GetFeaturesInArea(const float &x, const float  &y, const f
                 const cv::KeyPoint &kpUn = (Nleft == -1) ? mvKeysUn[vCell[j]]
                                                          : (!bRight) ? mvKeys[vCell[j]]
                                                                      : mvKeysRight[vCell[j]];
+                // Vector of keypoints (original for visualization) and undistorted (actually used by the system).
+                // In the stereo case, mvKeysUn is redundant as images must be rectified.
+                // In the RGB-D case, RGB images can be distorted.
+                // std::vector<cv::KeyPoint> mvKeys, mvKeysRight;
+                // std::vector<cv::KeyPoint> mvKeysUn;
+
                 if(bCheckLevels)
                 {
                     if(kpUn.octave<minLevel)
