@@ -53,24 +53,85 @@ Frame::Frame(): mpcpi(NULL), mpImuPreintegrated(NULL), mpPrevFrame(NULL), mpImuP
 
 //Copy Constructor
 Frame::Frame(const Frame &frame)
-    :mpcpi(frame.mpcpi),mpORBvocabulary(frame.mpORBvocabulary), mpORBextractorLeft(frame.mpORBextractorLeft), mpORBextractorRight(frame.mpORBextractorRight),
-     mTimeStamp(frame.mTimeStamp), mK(frame.mK.clone()), mK_(Converter::toMatrix3f(frame.mK)), mDistCoef(frame.mDistCoef.clone()),
-     mbf(frame.mbf), mb(frame.mb), mThDepth(frame.mThDepth), N(frame.N), mvKeys(frame.mvKeys),
-     mvKeysRight(frame.mvKeysRight), mvKeysUn(frame.mvKeysUn), mvuRight(frame.mvuRight),
-     mvDepth(frame.mvDepth), mBowVec(frame.mBowVec), mFeatVec(frame.mFeatVec),
-     mDescriptors(frame.mDescriptors.clone()), mDescriptorsRight(frame.mDescriptorsRight.clone()),
-     mvpMapPoints(frame.mvpMapPoints), mvbOutlier(frame.mvbOutlier), mImuCalib(frame.mImuCalib), mnCloseMPs(frame.mnCloseMPs),
-     mpImuPreintegrated(frame.mpImuPreintegrated), mpImuPreintegratedFrame(frame.mpImuPreintegratedFrame), mImuBias(frame.mImuBias),
-     mnId(frame.mnId), mpReferenceKF(frame.mpReferenceKF), mnScaleLevels(frame.mnScaleLevels),
-     mfScaleFactor(frame.mfScaleFactor), mfLogScaleFactor(frame.mfLogScaleFactor),
-     mvScaleFactors(frame.mvScaleFactors), mvInvScaleFactors(frame.mvInvScaleFactors), mNameFile(frame.mNameFile), mnDataset(frame.mnDataset),
-     mvLevelSigma2(frame.mvLevelSigma2), mvInvLevelSigma2(frame.mvInvLevelSigma2), mpPrevFrame(frame.mpPrevFrame), mpLastKeyFrame(frame.mpLastKeyFrame),
-     mbIsSet(frame.mbIsSet), mbImuPreintegrated(frame.mbImuPreintegrated), mpMutexImu(frame.mpMutexImu),
-     mpCamera(frame.mpCamera), mpCamera2(frame.mpCamera2), Nleft(frame.Nleft), Nright(frame.Nright),
-     monoLeft(frame.monoLeft), monoRight(frame.monoRight), mvLeftToRightMatch(frame.mvLeftToRightMatch),
-     mvRightToLeftMatch(frame.mvRightToLeftMatch), mvStereo3Dpoints(frame.mvStereo3Dpoints),
-     mTlr(frame.mTlr), mRlr(frame.mRlr), mtlr(frame.mtlr), mTrl(frame.mTrl),
-     mTcw(frame.mTcw), mbHasPose(false), mbHasVelocity(false)
+    :mpcpi(frame.mpcpi),//ConstraintPoseImu* mpcpi;
+    mpORBvocabulary(frame.mpORBvocabulary),
+    mpORBextractorLeft(frame.mpORBextractorLeft), 
+    mpORBextractorRight(frame.mpORBextractorRight),
+    mTimeStamp(frame.mTimeStamp), 
+    mK(frame.mK.clone()), 
+    mK_(Converter::toMatrix3f(frame.mK)),
+    mDistCoef(frame.mDistCoef.clone()),
+    mbf(frame.mbf), // // Stereo baseline multiplied by fx.
+    mb(frame.mb), // // Stereo baseline in meters.
+    mThDepth(frame.mThDepth), // // Far points are inserted as in the monocular case from 2 views.
+    N(frame.N), // // Number of KeyPoints.
+    mvKeys(frame.mvKeys),
+    //In the RGB-D case, RGB images can be distorted.
+    // In the stereo case, mvKeysUn is redundant as images must be rectified.
+    // //  Vector of keypoints (original for visualization) and undistorted (actually used by the system). 
+     mvKeysRight(frame.mvKeysRight), 
+    mvKeysUn(frame.mvKeysUn), 
+
+    // // "Monocular" keypoints have a negative value.
+    mvuRight(frame.mvuRight),
+    mvDepth(frame.mvDepth), 
+
+    mBowVec(frame.mBowVec), 
+    mFeatVec(frame.mFeatVec),
+
+    mDescriptors(frame.mDescriptors.clone()),
+    mDescriptorsRight(frame.mDescriptorsRight.clone()),
+
+    mvpMapPoints(frame.mvpMapPoints), 
+    mvbOutlier(frame.mvbOutlier), 
+    mImuCalib(frame.mImuCalib), 
+    mnCloseMPs(frame.mnCloseMPs),
+    // MapPoints associated to keypoints, NULL pointer if no association.
+    // Flag to identify outlier associations.
+
+    mpImuPreintegrated(frame.mpImuPreintegrated),
+    mpImuPreintegratedFrame(frame.mpImuPreintegratedFrame),
+
+    mImuBias(frame.mImuBias),
+    mnId(frame.mnId), 
+    mpReferenceKF(frame.mpReferenceKF), 
+
+    mnScaleLevels(frame.mnScaleLevels),
+     mfScaleFactor(frame.mfScaleFactor), 
+    mfLogScaleFactor(frame.mfLogScaleFactor),
+     mvScaleFactors(frame.mvScaleFactors), 
+    mvInvScaleFactors(frame.mvInvScaleFactors), 
+    mvLevelSigma2(frame.mvLevelSigma2),
+    mvInvLevelSigma2(frame.mvInvLevelSigma2),
+
+    mNameFile(frame.mNameFile), 
+    mnDataset(frame.mnDataset),
+
+    mpPrevFrame(frame.mpPrevFrame),  //  // Pointer to previous frame
+    mpLastKeyFrame(frame.mpLastKeyFrame),
+
+     mbIsSet(frame.mbIsSet), 
+    mbImuPreintegrated(frame.mbImuPreintegrated), 
+    mpMutexImu(frame.mpMutexImu),
+
+     mpCamera(frame.mpCamera), 
+    mpCamera2(frame.mpCamera2), 
+    Nleft(frame.Nleft), 
+    Nright(frame.Nright),
+     monoLeft(frame.monoLeft), 
+    monoRight(frame.monoRight), 
+    mvLeftToRightMatch(frame.mvLeftToRightMatch),
+     mvRightToLeftMatch(frame.mvRightToLeftMatch), 
+
+    mvStereo3Dpoints(frame.mvStereo3Dpoints),
+     mTlr(frame.mTlr), 
+    mRlr(frame.mRlr), 
+    mtlr(frame.mtlr), 
+    mTrl(frame.mTrl),
+     mTcw(frame.mTcw), 
+
+    mbHasPose(false), 
+    mbHasVelocity(false)
 {
     for(int i=0;i<FRAME_GRID_COLS;i++)
         for(int j=0; j<FRAME_GRID_ROWS; j++){
@@ -98,10 +159,89 @@ Frame::Frame(const Frame &frame)
 }
 
 
-Frame::Frame(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timeStamp, ORBextractor* extractorLeft, ORBextractor* extractorRight, ORBVocabulary* voc, cv::Mat &K, cv::Mat &distCoef, const float &bf, const float &thDepth, GeometricCamera* pCamera, Frame* pPrevF, const IMU::Calib &ImuCalib)
-    :mpcpi(NULL), mpORBvocabulary(voc),mpORBextractorLeft(extractorLeft),mpORBextractorRight(extractorRight), mTimeStamp(timeStamp), mK(K.clone()), mK_(Converter::toMatrix3f(K)), mDistCoef(distCoef.clone()), mbf(bf), mThDepth(thDepth),
-     mImuCalib(ImuCalib), mpImuPreintegrated(NULL), mpPrevFrame(pPrevF),mpImuPreintegratedFrame(NULL), mpReferenceKF(static_cast<KeyFrame*>(NULL)), mbIsSet(false), mbImuPreintegrated(false),
-     mpCamera(pCamera) ,mpCamera2(nullptr), mbHasPose(false), mbHasVelocity(false)
+Frame::Frame(
+    const cv::Mat &imLeft, 
+    const cv::Mat &imRight, 
+
+    const double &timeStamp, 
+
+    ORBextractor* extractorLeft,
+    ORBextractor* extractorRight, 
+    ORBVocabulary* voc, 
+
+    cv::Mat &K, 
+    cv::Mat &distCoef,
+    const float &bf, 
+    const float &thDepth, 
+
+    GeometricCamera* pCamera, 
+    Frame* pPrevF, 
+
+    const IMU::Calib &ImuCalib)
+    :mpcpi(NULL), 
+    mpORBvocabulary(voc),
+    mpORBextractorLeft(extractorLeft),// // Feature extractor. The right is used only in the stereo case.
+    mpORBextractorRight(extractorRight), 
+
+    mTimeStamp(timeStamp), 
+
+    // Calibration matrix and OpenCV distortion parameters.
+    mK(K.clone()), 
+    mK_(Converter::toMatrix3f(K)), 
+    //  mK = cv::Mat::eye(3,3,CV_32F);
+    //  mK.at<float>(0, 0) = fx;
+    //  mK.at<float>(1, 1) = fy;
+    //  mK.at<float>(0, 2) = cx;
+    //  mK.at<float>(1, 2) = cy;
+    //
+    //  mK_.setIdentity();
+    //  mK_(0, 0) = fx;
+    //  mK_(1, 1) = fy;
+    //  mK_(0, 2) = cx;
+    //  mK_(1, 2) = cy;
+
+    mDistCoef(distCoef.clone()), 
+        //std::cout << "- Camera: Pinhole" << std::endl;
+        //std::cout << "- Image scale: " << mImageScale << std::endl;
+        //std::cout << "- fx: " << fx << std::endl;
+        //std::cout << "- fy: " << fy << std::endl;
+        //std::cout << "- cx: " << cx << std::endl;
+        //std::cout << "- cy: " << cy << std::endl;
+        //std::cout << "- k1: " << mDistCoef.at<float>(0) << std::endl;
+        //std::cout << "- k2: " << mDistCoef.at<float>(1) << std::endl;
+
+
+        //std::cout << "- p1: " << mDistCoef.at<float>(2) << std::endl;
+        //std::cout << "- p2: " << mDistCoef.at<float>(3) << std::endl;
+
+    mbf(bf), // // Stereo baseline multiplied by fx.
+    mThDepth(thDepth),
+
+    mImuCalib(ImuCalib), 
+    //   Left camera
+    // // tcw translation camera to world
+    //  tcw[0] = pKF->GetTranslation().cast<double>();
+    // // Rcw Rotation camera to world
+    //  Rcw[0] = pKF->GetRotation().cast<double>();
+    //  tcb[0] = pKF->mImuCalib.mTcb.translation().cast<double>();
+    //  Rcb[0] = pKF->mImuCalib.mTcb.rotationMatrix().cast<double>();
+    //  Rbc[0] = Rcb[0].transpose();
+    //  tbc[0] = pKF->mImuCalib.mTbc.translation().cast<double>();
+    //  pCamera[0] = pKF->mpCamera;
+    //  bf = pKF->mbf;
+
+    mpImuPreintegrated(NULL), 
+    mpPrevFrame(pPrevF),
+    mpImuPreintegratedFrame(NULL), 
+    mpReferenceKF(static_cast<KeyFrame*>(NULL)), 
+    mbIsSet(false), 
+    mbImuPreintegrated(false),
+
+    mpCamera(pCamera) ,
+    mpCamera2(nullptr), 
+
+    mbHasPose(false), 
+    mbHasVelocity(false)
 {
     // Frame ID
     mnId=nNextId++;
